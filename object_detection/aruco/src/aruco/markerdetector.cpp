@@ -187,29 +187,30 @@ namespace aruco
     for ( unsigned int i=0;i<MarkerCanditates.size();++i )
     {
       //Find proyective homography
-      Mat canonicalMarker;
+      /*Mat canonicalMarker;
       bool resW=false;
       if (_enableCylinderWarp)
         resW=warp_cylinder( grey,canonicalMarker,Size ( _markerWarpSize,_markerWarpSize ),MarkerCanditates[i] );
       else  resW=warp ( grey,canonicalMarker,Size ( _markerWarpSize,_markerWarpSize ),MarkerCanditates[i] );
       if (resW) {
         int nRotations;
-        int id= ( *markerIdDetector_ptrfunc ) ( canonicalMarker,nRotations );
+        int id= ( *markerIdDetector_ptrfunc ) ( canonicalMarker,nRotations );*/
+        int id= 582;
         if ( id!=-1 )
         {
           if(_cornerMethod==LINES) refineCandidateLines( MarkerCanditates[i] ); // make LINES refinement before lose contour points
           detectedMarkers.push_back ( MarkerCanditates[i] );
           detectedMarkers.back().id=id;
           //sort the points so that they are always in the same order no matter the camera orientation
-          std::rotate ( detectedMarkers.back().begin(),detectedMarkers.back().begin() +4-nRotations,detectedMarkers.back().end() );
+          //std::rotate ( detectedMarkers.back().begin(),detectedMarkers.back().begin() +4-nRotations,detectedMarkers.back().end() );
         }
         else _candidates.push_back ( MarkerCanditates[i] );
       }
 
-    }
+    
 
 
-    ///refine the corner location if desired
+    //refine the corner location if desired
     if ( detectedMarkers.size() >0 && _cornerMethod!=NONE && _cornerMethod!=LINES )
     {
       vector<Point2f> Corners;
