@@ -8,3 +8,5 @@ How to use
 3. catkin build
 
 if erroroccurs modify aruco_ros/object_pos.cpp
+
+node will give position (geometry_msgs::PoseStamped) in ```/detected_object/pose``` - world frame pose of detected rectangle.
