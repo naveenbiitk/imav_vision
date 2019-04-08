@@ -5,13 +5,12 @@
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 #include <tf/transform_datatypes.h>
-#include <nav_msgs/Odometry.h>
+#include <geometry_msgs/Pose.h>
 
 #define PI 3.14159265
 
 using namespace std;
 using namespace Eigen;
-
 Matrix<float, 3, 3> R;
 //Matrix<float, 3, 3> R_inv;
 Matrix<float, 3, 3> pos;
@@ -21,6 +20,7 @@ Quaternionf quat;
 float x = 0, y = 0, z=0;
 float x_glob = 0, y_glob = 0, z_glob=0;
 int aruco_detected_flag=0;
+int pose_detected_flag=0;
 float sp_thresh=0.1;
 float z_dist=0.1;
 
@@ -39,12 +39,14 @@ void imuCallback(const sensor_msgs::Imu::ConstPtr &msg)
 }
 
 
-void odomcb(const nav_msgs::Odometry::ConstPtr &msg)
+void odomcb(const geometry_msgs::Pose::ConstPtr &msg)
 {
-    x_glob = msg->pose.pose.position.x;
-    y_glob = msg->pose.pose.position.y;
-    z_glob = msg->pose.pose.position.z;
-    aruco_detected_flag = 1;
+    x_glob = msg->position.x;
+    y_glob = msg->position.y;
+    z_glob = msg->position.z;
+    pose_detected_flag = 1;
+    pos_sp.pose.orientation=msg->orientation;
+
 }
 
 
@@ -61,13 +63,12 @@ int main(int argc, char **argv)
 {
     ros::init(argc, argv, "object_pos");
     ros::NodeHandle nh;
-
-    ros::Subscriber imu_sub = nh.subscribe("/mavros/imu/data", 100, imuCallback);
+    ros::Subscriber imu_sub = nh.subscribe("/mavros/imu/data", 10, imuCallback);
     ros::Subscriber aruco_sub = nh.subscribe("/aruco_single/pose", 10, arucocb);
     ros::Subscriber odom_sub = nh.subscribe("/odometry", 10, odomcb);
    
 
-    ros::Publisher pos_sp_pub = nh.advertise<geometry_msgs::PoseStamped>("/detected_object/pose", 10);
+    ros::Publisher pos_sp_pub = nh.advertise<geometry_msgs::PoseStamped>("/object/pose", 10);
 
     ros::Rate loop_rate(20);
 
@@ -76,7 +77,7 @@ int main(int argc, char **argv)
         
         pos_sp.header.stamp = ros::Time::now();
     
-        if (aruco_detected_flag == 1 )
+        if (aruco_detected_flag == 1 && pose_detected_flag == 1)
         {
             pos(0,0)=x;
             pos(1,0)=y;
@@ -85,31 +86,21 @@ int main(int argc, char **argv)
            // R_inv = R.inverse();
             pos = R*pos ;
 
-            cout<<x<<"--"<<y<<"****"<<pos(0,0)<<"--"<<pos(1,0)<<endl;
+            //cout<<x<<"--"<<y<<"****"<<pos(0,0)<<"--"<<pos(1,0)<<endl;
             pos_sp.pose.position.x=pos(0,0)+x_glob;
             pos_sp.pose.position.y=pos(1,0)+y_glob;
-
-           /* if (pos_sp.pose.position.x < -sp_thresh || pos_sp.pose.position.x > sp_thresh || pos_sp.pose.position.y < -sp_thresh || pos_sp.pose.position.y > sp_thresh)
-
-            if (pos_sp.pose.position.x > sp_thresh)
-                pos_sp.pose.position.x = sp_thresh;
-            else if (pos_sp.pose.position.x < -sp_thresh)
-                pos_sp.pose.position.x = -sp_thresh;
-            if (pos_sp.pose.position.y < -sp_thresh)
-                pos_sp.pose.position.y = -sp_thresh;
-            else if (pos_sp.pose.position.y > sp_thresh)
-                pos_sp.pose.position.y = sp_thresh;
-*/
             
-            pos_sp.pose.position.z = z_dist;
+            pos_sp.pose.position.z = z_glob;
             pos_sp_pub.publish(pos_sp);
             
             aruco_detected_flag = 0;
+	    
         }
-
-        pos_sp_pub.publish(pos_sp);
+        
+       // pos_sp_pub.publish(pos_sp);
         ros::spinOnce();
         loop_rate.sleep();
+
     }
 
     return 0;
