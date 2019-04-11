@@ -12,13 +12,14 @@
 using namespace std;
 using namespace Eigen;
 Matrix<float, 3, 3> R;
-//Matrix<float, 3, 3> R_inv;
+Matrix<float, 3, 3> R_inv;
 Matrix<float, 3, 3> pos;
 geometry_msgs::PoseStamped pos_sp;
 Quaternionf quat;
 
 float x = 0, y = 0, z=0;
 float x_glob = 0, y_glob = 0, z_glob=0;
+float pos_x_prev = 0, pos_y_prev = 0;
 int aruco_detected_flag=0;
 int pose_detected_flag=0;
 float sp_thresh=0.1;
@@ -63,12 +64,12 @@ int main(int argc, char **argv)
 {
     ros::init(argc, argv, "object_pos");
     ros::NodeHandle nh;
-    ros::Subscriber imu_sub = nh.subscribe("/mavros/imu/data", 10, imuCallback);
-    ros::Subscriber aruco_sub = nh.subscribe("/aruco_single/pose", 10, arucocb);
-    ros::Subscriber odom_sub = nh.subscribe("/odometry", 10, odomcb);
+    ros::Subscriber imu_sub = nh.subscribe("imu/data", 10, imuCallback);
+    ros::Subscriber aruco_sub = nh.subscribe("aruco_single/pose", 10, arucocb);
+    ros::Subscriber odom_sub = nh.subscribe("odometry", 10, odomcb);
    
 
-    ros::Publisher pos_sp_pub = nh.advertise<geometry_msgs::PoseStamped>("/object/pose", 10);
+    ros::Publisher pos_sp_pub = nh.advertise<geometry_msgs::PoseStamped>("object/pose", 10);
 
     ros::Rate loop_rate(20);
 
@@ -83,17 +84,26 @@ int main(int argc, char **argv)
             pos(1,0)=y;
             pos(2,0)=z;
 
-           // R_inv = R.inverse();
+            R_inv = R.inverse();
             pos = R*pos ;
 
             //cout<<x<<"--"<<y<<"****"<<pos(0,0)<<"--"<<pos(1,0)<<endl;
+	  /*  if(pos(0,0)<0.1)
+		pos(0,0)=pos_x_prev;
+	    if(pos(1,0)<0.1)
+		pos(1,0)=pos_y_prev;*/
             pos_sp.pose.position.x=pos(0,0)+x_glob;
             pos_sp.pose.position.y=pos(1,0)+y_glob;
             
             pos_sp.pose.position.z = z_glob;
             pos_sp_pub.publish(pos_sp);
             
+		
             aruco_detected_flag = 0;
+	    pose_detected_flag = 0;
+
+		pos_y_prev=pos(1,0);
+		pos_x_prev=pos(0,0);
 	    
         }
         

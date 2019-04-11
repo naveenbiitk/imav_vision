@@ -8,12 +8,12 @@
     <arg name="corner_refinement" default="LINES" /> <!-- NONE, HARRIS, LINES, SUBPIX -->
 
     <node name="input" type="input" pkg="aruco_ros">
-        <remap from="/colour_image" to="/icarus/nadir_cam/image_raw" />
+        <remap from="colour_image" to="/icarus/nadir_cam/image_raw" />
     </node>
 
     <node pkg="aruco_ros" type="single" name="aruco_single">
-        <remap from="/camera_info" to="/icarus/nadir_cam/camera_info" />
-        <remap from="/image" to="/image_converter/output_video" />
+        <remap from="aruco_single/camera_info" to="/icarus/nadir_cam/camera_info" />
+        <remap from="aruco_single/threshold_image" to="threshold_image" />
         <param name="image_is_rectified" value="True"/>
         <param name="marker_size"        value="$(arg markerSize)"/>
         <param name="marker_id"          value="$(arg markerId)"/>
@@ -24,9 +24,9 @@
     </node>
 
     <node name="object_pos" type="object_pos" pkg="aruco_ros">
-        <remap from="/odometry" to="/icarus/ground_truth/pose" />
-	<remap from="/mavros/imu/data" to="/icarus/imu" />
-	<remap from="/object/pose" to="/icarus/command/pose" />
+        <remap from="odometry" to="/icarus/ground_truth/pose" />
+	<remap from="imu/data" to="/icarus/imu" />
+	<remap from="object/pose" to="/object/pose" />
     </node>
 </launch>
 
